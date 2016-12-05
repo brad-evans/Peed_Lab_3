@@ -27,6 +27,7 @@ def main():
                 s.bind((self.host,self.port))
                 s.listen(1)
                 print("waiting for connection from client")
+                self.conn, addr = s.accept()     
                 while self.running == True:
                     data = self.conn.recv(1024)
                     if data == 'exit':
@@ -115,7 +116,6 @@ def main():
 
         if smpr.match:
             print "match"
-            s.close()
         else:
             print "no match"
             s.close()
@@ -152,7 +152,6 @@ def main():
         smpr.step5(buffer)
         if smpr.match:
             print "match"
-            s.close()
         else:
             print "no match"
             s.close()
