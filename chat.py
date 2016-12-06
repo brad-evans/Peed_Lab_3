@@ -98,15 +98,16 @@ def main():
             def run(self):
                 print "text input run "
                 while self.running == True:
-                  text = raw_input('Me :>>>>')
+                  text = raw_input('')
                   try:
-                      text = text.replace('\n', '') + '\n'
+                      text = text.replace('\n', '')
+                      
                       text = chat_client.a.encrypt(text)
                       chat_client.sock.sendall(text)
                   except:
                       Exception
                   try:
-                      text = text.replace('\n', '') + '\n'
+                      text = text.replace('\n', '')
                       text = chat_server.a.encrypt(text)
                       chat_server.conn.sendall(text)
                   except:
