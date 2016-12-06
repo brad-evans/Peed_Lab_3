@@ -30,6 +30,7 @@ def main():
 
     class Chat_Server(threading.Thread):
             def __init__(self):
+                print "Chat_Server init"
                 threading.Thread.__init__(self)
                 self.running = 1
                 self.conn = None
@@ -37,6 +38,7 @@ def main():
                 self.host = '127.0.0.1'
                 self.port = None
             def run(self):
+                print "running chat server"
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.bind((self.host,self.port))
                 s.listen(1)
@@ -60,17 +62,21 @@ def main():
 
     class Chat_Client(threading.Thread):
             def __init__(self):
+                print "Chat Client init"
                 threading.Thread.__init__(self)
                 self.host = None
                 self.sock = None
                 self.running = 1
                 self.port = None
             def run(self):
+                print "Chat Client Run"
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.sock.connect((self.host, self.port))
                 while self.running == True:
-                    data = self.sock.recv(1024)
 
+                    rcv = self.sock.recv(1024)
+
+                    data = ''+rcv
                     if data:
                         data = a.decrypt(data)
                         if data == 'exit':
@@ -85,18 +91,22 @@ def main():
 
     class Text_Input(threading.Thread):
             def __init__(self):
+                print "text input init"
                 threading.Thread.__init__(self)
                 self.running = 1
             def run(self):
+                print "text input run "
                 while self.running == True:
                   text = raw_input('')
                   try:
-                      text = a.encrypt(text) + 'EOP'
+                      text = text.replace('\n', '') + '\n'
+                      text = a.encrypt(text)
                       chat_client.sock.sendall(text)
                   except:
                       Exception
                   try:
-                      text = a.encrypt(text) + 'EOP'
+                      text = text.replace('\n', '') + '\n'
+                      text = a.encrypt(text)
                       chat_server.conn.sendall(text)
                   except:
                       Exception
@@ -149,7 +159,7 @@ def main():
             s.close()
             sys.exit()
 
-        print "Send this ratchet key to your client: ", rkey
+
         chat_server = Chat_Server()
         chat_server.port = int(raw_input("Enter port to listen on: "))
         chat_server.start()
