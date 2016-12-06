@@ -29,7 +29,7 @@ def main():
 
     class Chat_Server(threading.Thread):
             def __init__(self):
-                print "Chat_Server init"
+                #print "Chat_Server init"
                 threading.Thread.__init__(self)
                 self.running = 1
                 self.conn = None
@@ -38,12 +38,14 @@ def main():
                 self.port = None
                 self.a = None
             def run(self):
-                print "running chat server"
+                #print "running chat server"
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.bind((self.host,self.port))
                 s.listen(1)
-                print("waiting for connection from client")
+                print "waiting for connection from client..."
                 self.conn, addr = s.accept()
+                print "\033[1;36mBegin Chat Conversation\033[0m"
+                print "______________________________________________________"
                 while self.running == True:
                     data = self.conn.recv(1024)
 
@@ -53,7 +55,7 @@ def main():
                         if data == 'exit':
                             self.running = 0
                         else:
-                            print "Friend:>>>> " + data
+                            print "\033[1;31mFriend:>>>> " + data + "\033[0m"
                     else:
                         break
                 time.sleep(0)
@@ -62,7 +64,7 @@ def main():
 
     class Chat_Client(threading.Thread):
             def __init__(self):
-                print "Chat Client init"
+                #print "Chat Client init"
                 threading.Thread.__init__(self)
                 self.host = None
                 self.sock = None
@@ -70,9 +72,11 @@ def main():
                 self.port = None
                 self.a = None
             def run(self):
-                print "Chat Client Run"
+                #print "Chat Client Run"
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.sock.connect((self.host, self.port))
+                print "\033[1;36mBegin Chat Conversation\033[0m"
+                print "______________________________________________________"
                 while self.running == True:
 
                     rcv = self.sock.recv(1024)
@@ -83,7 +87,7 @@ def main():
                         if data == 'exit':
                             self.running = 0
                         else:
-                            print "Friend:>>>> " + data
+                            print "\033[1;31mFriend:>>>> " + data + "\033[0m"
                     else:
                         break
                 time.sleep(0)
@@ -92,16 +96,16 @@ def main():
 
     class Text_Input(threading.Thread):
             def __init__(self):
-                print "text input init"
+                #print "text input init"
                 threading.Thread.__init__(self)
                 self.running = 1
             def run(self):
-                print "text input run "
+                #print "text input run "
                 while self.running == True:
                   text = raw_input('')
                   try:
                       text = text.replace('\n', '')
-                      
+
                       text = chat_client.a.encrypt(text)
                       chat_client.sock.sendall(text)
                   except:
@@ -130,10 +134,10 @@ def main():
 
         s.bind((host, port))           # Bind to the port
         s.listen(3)
-        print "waiting for connections..."                  # Now wait for client connection.
+        print "waiting for connection..."                  # Now wait for client connection.
         c, addr = s.accept()           # Establish connection with client.
         print 'Got connection from', addr
-        secret = raw_input("Enter shared secret for SMP: ")
+        secret = raw_input("\033[1mEnter shared secret for SMP: \033[0m")
         smpr = smp.SMP(secret)
         buffer = c.recv(4096)[ 4:]
 
@@ -148,25 +152,23 @@ def main():
         c.send( tempBuffer )
 
         if smpr.match:
-            print "SMP Matched"
+            print "\033[1;32mSMP Matched!!\033[0m"
             print "______________________________________________________"
-            print "Secure Chat Setup"
-            myName = raw_input("What is your name: ")
-            otherName = raw_input("What is the other person's name: ")
-            masterkey = raw_input("what is your previously decided on master key")
+            print "\033[1mSecure Chat Setup\033[0m"
+            myName = raw_input("\033[1mEnter your name: \033[0m")
+            otherName = raw_input("\033[1mEnter your friend's name: \033[0m")
+            masterkey = raw_input("\033[1mEnter the master key: \033[0m")
             chat_server = Chat_Server()                       # Reserve best port.
             chat_server.a = Axolotl(myName, dbname = otherName + '.db', dbpassphrase = None, nonthreaded_sql = False)
             chat_server.a.createState(other_name = otherName, mkey = hashlib.sha256(masterkey).digest(), mode=False)
             rkey = b2a(chat_server.a.state['DHRs']).strip()
-            print "Send this ratchet key to your client: ", rkey
+            print "\033[35mSend this ratchet key to your client: \033[0m", rkey
             #print 'Server started'
             #print 'Waiting for cients to connect...'
         else:
-            print "no match"
+            print "\033[1;31mSMP did not Match \033[0m"
             s.close()
             sys.exit()
-
-
 
         chat_server.port = 8080
         chat_server.start()
@@ -182,7 +184,7 @@ def main():
 
         print 'Connect to ', host, port
         s.connect((host, port))
-        secret = raw_input("Enter shared secret for SMP: ")
+        secret = raw_input("\033[1mEnter shared secret for SMP: \033[0m")
         smpr = smp.SMP(secret)
 
         buffer = smpr.step1()
@@ -199,15 +201,15 @@ def main():
         buffer = s.recv(4096)[4:]
         smpr.step5(buffer)
         if smpr.match:
-            print "SMP Matched"
+            print "\033[1;32mSMP Matched \033[0m"
             print "______________________________________________________"
-            print "Secure Chat Setup"
-            myName = raw_input("What is your name: ")
-            otherName = raw_input("What is the other name: ")
-            masterkey = raw_input("what is your previously decided on master key")                         # Reserve best port.
-            rkey = raw_input("what is the ratchet key you received from your partner:")
+            print "\033[1mSecure Chat Setup \033[0m"
+            myName = raw_input("\033[1mEnter your name: \033[0m")
+            otherName = raw_input("\033[1mEnter your friend's name: \033[0m")
+            masterkey = raw_input("\033[1mEnter the master key: \033[0m")                         # Reserve best port.
+            rkey = raw_input("\033[1mEnter the ratchet key (received from your partner): \033[0m")
         else:
-            print "no match"
+            print "\033[1;31mSMP did not Match \033[0m"
             s.close()
             sys.exit()
         chat_client = Chat_Client()
@@ -216,6 +218,7 @@ def main():
 
         chat_client.host = '127.0.0.1'
         chat_client.port = 8080
+
         chat_client.start()
         text_input = Text_Input()
         text_input.start()
