@@ -26,7 +26,6 @@ from smp import longToBytes
 from smp import padBytes
 
 def main():
-    global a
 
     class Chat_Server(threading.Thread):
             def __init__(self):
@@ -37,6 +36,7 @@ def main():
                 self.addr = None
                 self.host = '127.0.0.1'
                 self.port = None
+                self.a = None
             def run(self):
                 print "running chat server"
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -49,7 +49,7 @@ def main():
 
 
                     if data:
-                        data = a.decrypt(data)
+                        data = self.a.decrypt(data)
                         if data == 'exit':
                             self.running = 0
                         else:
@@ -68,6 +68,7 @@ def main():
                 self.sock = None
                 self.running = 1
                 self.port = None
+                self.a = None
             def run(self):
                 print "Chat Client Run"
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -78,7 +79,7 @@ def main():
 
                     data = ''+rcv
                     if data:
-                        data = a.decrypt(data)
+                        data = self.a.decrypt(data)
                         if data == 'exit':
                             self.running = 0
                         else:
@@ -100,13 +101,13 @@ def main():
                   text = raw_input('')
                   try:
                       text = text.replace('\n', '') + '\n'
-                      text = a.encrypt(text)
+                      text = chat_client.a.encrypt(text)
                       chat_client.sock.sendall(text)
                   except:
                       Exception
                   try:
                       text = text.replace('\n', '') + '\n'
-                      text = a.encrypt(text)
+                      text = chat_server.a.encrypt(text)
                       chat_server.conn.sendall(text)
                   except:
                       Exception
@@ -126,10 +127,11 @@ def main():
         port = 8000
         myName = raw_input("What is your name: ")
         otherName = raw_input("What is the other name: ")
-        masterkey = raw_input("what is your previously decided on master key")                         # Reserve best port.
-        a = Axolotl(myName, dbname = otherName + '.db', dbpassphrase = None, nonthreaded_sql = False)
-        a.createState(other_name = otherName, mkey = hashlib.sha256(masterkey).digest(), mode=False)
-        rkey = b2a(a.state['DHRs']).strip()
+        masterkey = raw_input("what is your previously decided on master key")  
+        chat_server = Chat_Server()                       # Reserve best port.
+        chat_server.a = Axolotl(myName, dbname = otherName + '.db', dbpassphrase = None, nonthreaded_sql = False)
+        chat_server.a.createState(other_name = otherName, mkey = hashlib.sha256(masterkey).digest(), mode=False)
+        rkey = b2a(chat_server.a.state['DHRs']).strip()
         print "Send this ratchet key to your client: ", rkey
         print 'Server started'
         print 'Waiting for cients to connect...'
@@ -160,7 +162,7 @@ def main():
             sys.exit()
 
 
-        chat_server = Chat_Server()
+        
         chat_server.port = int(raw_input("Enter port to listen on: "))
         chat_server.start()
         text_input = Text_Input()
@@ -200,9 +202,10 @@ def main():
             print "no match"
             s.close()
             sys.exit()
-        a = Axolotl(myName, dbname=otherName + '.db', dbpassphrase=None,nonthreaded_sql=False)
-        a.createState(other_name=otherName,mkey=hashlib.sha256(masterkey).digest(),mode=True,other_ratchetKey=a2b(rkey))
         chat_client = Chat_Client()
+        chat_client.a = Axolotl(myName, dbname=otherName + '.db', dbpassphrase=None,nonthreaded_sql=False)
+        chat_client.a.createState(other_name=otherName,mkey=hashlib.sha256(masterkey).digest(),mode=True,other_ratchetKey=a2b(rkey))
+        
         chat_client.host = raw_input("Enter host to connect to: ")
         chat_client.port = int(raw_input("Enter port to connect to: "))
         chat_client.start()
