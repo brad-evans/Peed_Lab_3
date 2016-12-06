@@ -53,7 +53,7 @@ def main():
                         if data == 'exit':
                             self.running = 0
                         else:
-                            print "Client Says >> " + data
+                            print "Friend:>>>> " + data
                     else:
                         break
                 time.sleep(0)
@@ -83,7 +83,7 @@ def main():
                         if data == 'exit':
                             self.running = 0
                         else:
-                            print "Server Says >> " + data
+                            print "Friend:>>>> " + data
                     else:
                         break
                 time.sleep(0)
@@ -98,7 +98,7 @@ def main():
             def run(self):
                 print "text input run "
                 while self.running == True:
-                  text = raw_input('')
+                  text = raw_input('Me :>>>>')
                   try:
                       text = text.replace('\n', '') + '\n'
                       text = chat_client.a.encrypt(text)
@@ -125,22 +125,14 @@ def main():
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)           # Socket object
         host = '127.0.0.1'         # Get host name
         port = 8000
-        myName = raw_input("What is your name: ")
-        otherName = raw_input("What is the other name: ")
-        masterkey = raw_input("what is your previously decided on master key")  
-        chat_server = Chat_Server()                       # Reserve best port.
-        chat_server.a = Axolotl(myName, dbname = otherName + '.db', dbpassphrase = None, nonthreaded_sql = False)
-        chat_server.a.createState(other_name = otherName, mkey = hashlib.sha256(masterkey).digest(), mode=False)
-        rkey = b2a(chat_server.a.state['DHRs']).strip()
-        print "Send this ratchet key to your client: ", rkey
-        print 'Server started'
-        print 'Waiting for cients to connect...'
+
 
         s.bind((host, port))           # Bind to the port
-        s.listen(3)                    # Now wait for client connection.
+        s.listen(3)
+        print "waiting for connections..."                  # Now wait for client connection.
         c, addr = s.accept()           # Establish connection with client.
         print 'Got connection from', addr
-        secret = raw_input("Enter shared secret: ")
+        secret = raw_input("Enter shared secret for SMP: ")
         smpr = smp.SMP(secret)
         buffer = c.recv(4096)[ 4:]
 
@@ -155,15 +147,27 @@ def main():
         c.send( tempBuffer )
 
         if smpr.match:
-            print "match"
+            print "SMP Matched"
+            print "______________________________________________________"
+            print "Secure Chat Setup"
+            myName = raw_input("What is your name: ")
+            otherName = raw_input("What is the other person's name: ")
+            masterkey = raw_input("what is your previously decided on master key")
+            chat_server = Chat_Server()                       # Reserve best port.
+            chat_server.a = Axolotl(myName, dbname = otherName + '.db', dbpassphrase = None, nonthreaded_sql = False)
+            chat_server.a.createState(other_name = otherName, mkey = hashlib.sha256(masterkey).digest(), mode=False)
+            rkey = b2a(chat_server.a.state['DHRs']).strip()
+            print "Send this ratchet key to your client: ", rkey
+            #print 'Server started'
+            #print 'Waiting for cients to connect...'
         else:
             print "no match"
             s.close()
             sys.exit()
 
 
-        
-        chat_server.port = int(raw_input("Enter port to listen on: "))
+
+        chat_server.port = 8080
         chat_server.start()
         text_input = Text_Input()
         text_input.start()
@@ -174,13 +178,10 @@ def main():
         host = '127.0.0.1'        # Get host name
         port = 8000
                               # Reserve best port.
-        myName = raw_input("What is your name: ")
-        otherName = raw_input("What is the other name: ")
-        masterkey = raw_input("what is your previously decided on master key")                         # Reserve best port.
-        rkey = raw_input("what is the ratchet key you received from your partner:")
+
         print 'Connect to ', host, port
         s.connect((host, port))
-        secret = raw_input("Enter shared secret: ")
+        secret = raw_input("Enter shared secret for SMP: ")
         smpr = smp.SMP(secret)
 
         buffer = smpr.step1()
@@ -197,7 +198,13 @@ def main():
         buffer = s.recv(4096)[4:]
         smpr.step5(buffer)
         if smpr.match:
-            print "match"
+            print "SMP Matched"
+            print "______________________________________________________"
+            print "Secure Chat Setup"
+            myName = raw_input("What is your name: ")
+            otherName = raw_input("What is the other name: ")
+            masterkey = raw_input("what is your previously decided on master key")                         # Reserve best port.
+            rkey = raw_input("what is the ratchet key you received from your partner:")
         else:
             print "no match"
             s.close()
@@ -205,9 +212,9 @@ def main():
         chat_client = Chat_Client()
         chat_client.a = Axolotl(myName, dbname=otherName + '.db', dbpassphrase=None,nonthreaded_sql=False)
         chat_client.a.createState(other_name=otherName,mkey=hashlib.sha256(masterkey).digest(),mode=True,other_ratchetKey=a2b(rkey))
-        
-        chat_client.host = raw_input("Enter host to connect to: ")
-        chat_client.port = int(raw_input("Enter port to connect to: "))
+
+        chat_client.host = '127.0.0.1'
+        chat_client.port = 8080
         chat_client.start()
         text_input = Text_Input()
         text_input.start()
